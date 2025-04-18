@@ -18,18 +18,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install deps and build
+      - name: Install dependencies & build Vite app
         run: |
           npm ci
           npm run build
 
-      - name: Copy built dist to deploy branch
+      - name: Archive build files safely
         run: |
-          mkdir -p ../deploy
-          cp -r dist ../deploy/dist
-          cp Dockerfile docker-compose.yml ../deploy/
-          cd ../deploy
-          tar czf deploy.tar.gz .
+          mkdir /tmp/app3-deploy
+          cp -r dist Dockerfile docker-compose.yml /tmp/app3-deploy/
+          cd /tmp
+          tar -czf $GITHUB_WORKSPACE/deploy.tar.gz app3-deploy
+
+      - name: Upload archive to VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy.tar.gz"
+          target: "/home/christian/docker/app3"
 
       - name: SSH & deploy on VPS
         uses: appleboy/ssh-action@v1.0.0
@@ -39,8 +47,10 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/christian/docker/app3
-            rm -rf dist
-            mkdir dist
-            exit
-        env:
-          TAR: ../deploy/deploy.tar.gz
+            tar -xzf deploy.tar.gz
+            cp -r app3-deploy/dist .
+            cp app3-deploy/Dockerfile .
+            cp app3-deploy/docker-compose.yml .
+            rm -rf app3-deploy deploy.tar.gz
+            docker compose down
+            docker compose up -d --build --force-recreate
