@@ -28,7 +28,7 @@ jobs:
           mkdir /tmp/staging-app3
           cp -r dist /tmp/staging-app3/
           cp Dockerfile /tmp/staging-app3/
-          cp docker-compose.yml /tmp/staging-app3/
+          cp docker-compose.staging.yml /tmp/staging-app3/docker-compose.yml
           cd /tmp
           tar -czf $GITHUB_WORKSPACE/deploy-staging.tar.gz staging-app3
 

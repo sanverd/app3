@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  staging-app3:
+    build: .
+    container_name: staging-app3
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-app3.rule=Host(`stagingapp3.cycladesdev.com`)"
+      - "traefik.http.routers.staging-app3.entrypoints=websecure"
+      - "traefik.http.routers.staging-app3.tls.certresolver=letsencrypt"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
