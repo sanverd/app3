@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app3:
+    build: .
+    container_name: app3
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app3.rule=Host(`app3.cycladesdev.com`)"
+      - "traefik.http.routers.app3.entrypoints=websecure"
+      - "traefik.http.routers.app3.tls.certresolver=letsencrypt"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
