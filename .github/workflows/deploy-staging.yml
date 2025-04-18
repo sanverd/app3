@@ -23,14 +23,14 @@ jobs:
           npm ci
           npm run build
 
-      - name: Archive staging build
+      - name: Archive build
         run: |
-          mkdir /tmp/app3-staging
-          cp -r dist /tmp/app3-staging/
-          cp Dockerfile /tmp/app3-staging/
-          cp docker-compose.yml /tmp/app3-staging/
+          mkdir /tmp/staging-app3
+          cp -r dist /tmp/staging-app3/
+          cp Dockerfile /tmp/staging-app3/
+          cp docker-compose.yml /tmp/staging-app3/
           cd /tmp
-          tar -czf $GITHUB_WORKSPACE/deploy-staging.tar.gz app3-staging
+          tar -czf $GITHUB_WORKSPACE/deploy-staging.tar.gz staging-app3
 
       - name: Upload to VPS
         uses: appleboy/scp-action@v0.1.4
@@ -50,9 +50,9 @@ jobs:
           script: |
             cd /home/christian/docker/app3-staging
             tar -xzf deploy-staging.tar.gz
-            cp -r app3-staging/dist .
-            cp app3-staging/Dockerfile .
-            cp app3-staging/docker-compose.yml .
-            rm -rf app3-staging deploy-staging.tar.gz
+            cp -r staging-app3/dist .
+            cp staging-app3/Dockerfile .
+            cp staging-app3/docker-compose.yml .
+            rm -rf staging-app3 deploy-staging.tar.gz
             docker compose down
             docker compose up -d --build --force-recreate
