@@ -1,0 +1,56 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Archive build
+        run: |
+          mkdir /tmp/app3-staging
+          cp -r dist Dockerfile docker-compose.yml /tmp/app3-staging/
+          cd /tmp
+          tar -czf $GITHUB_WORKSPACE/deploy-staging.tar.gz app3-staging
+
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy-staging.tar.gz"
+          target: "/home/christian/docker/app3-staging"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/christian/docker/app3-staging
+            tar -xzf deploy-staging.tar.gz
+            cp -r app3-staging/dist .
+            cp app3-staging/Dockerfile .
+            cp app3-staging/docker-compose.yml .
+            rm -rf app3-staging deploy-staging.tar.gz
+            docker compose down
+            docker compose up -d --build --force-recreate
